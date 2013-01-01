@@ -1,3 +1,6 @@
+#! /usr/local/bin/jython
+# -*- coding: utf-8 -*-
+
 import sys
 #sys.path.append('/usr/share/java/itext5.jar')
 sys.path.append('/Users/lucypark/dev/pkgs/itext-5.3.5/itextpdf-5.3.5.jar')
@@ -43,6 +46,7 @@ def main(pdf):
     reader = PdfReader(pdf)
     npages = reader.getNumberOfPages()
     txt = pdf.replace('.pdf', '.txt')
+    # TODO: 파일이 이미 있는 경우에는 내용 모두 삭제, 또는 덮어쓰기
     f = open(txt, 'a')
     for page in range(1, npages+1):
         print '%s/%s' % (page, npages)
