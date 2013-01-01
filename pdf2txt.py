@@ -1,5 +1,6 @@
 import sys
-sys.path.append('/usr/share/java/itext5.jar')
+#sys.path.append('/usr/share/java/itext5.jar')
+sys.path.append('/Users/lucypark/dev/pkgs/itext-5.3.5/itextpdf-5.3.5.jar')
 
 from com.itextpdf.text.pdf import PdfReader
 from com.itextpdf.text.pdf.parser import PdfTextExtractor, TextExtractionStrategy
@@ -40,19 +41,21 @@ class AssemblyTextExtractionStrategy(TextExtractionStrategy):
 
 def main(pdf):
     reader = PdfReader(pdf)
-    page = 1
-    size = reader.getPageSize(page)
-    strategy = AssemblyTextExtractionStrategy(size.width, size.height)
-    text = PdfTextExtractor.getTextFromPage(reader, page, strategy)
+    npages = reader.getNumberOfPages()
     txt = pdf.replace('.pdf', '.txt')
-    f = open(txt, 'w')
-    f.write(text.encode('utf-8'))
+    f = open(txt, 'a')
+    for page in range(1, npages+1):
+        print '%s/%s' % (page, npages)
+        size = reader.getPageSize(page)
+        strategy = AssemblyTextExtractionStrategy(size.width, size.height)
+        text = PdfTextExtractor.getTextFromPage(reader, page, strategy)
+        f.write(text.encode('utf-8'))
     f.close()
 
 if __name__ == '__main__':
     args = sys.argv[1:]
     if len(args) != 1:
-        print 'Usage: assembly.py PDF'
+        print 'Usage: jython pdf2txt.py PDF'
         sys.exit()
     pdf = args[0]
     main(pdf)
