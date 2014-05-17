@@ -91,7 +91,6 @@ def parse_names(rows, linenum=None):
             message.append(row)
     return names, message
 
-
 def parse_dialogue(dialogue):
     parsed = []
     for d in dialogue:
@@ -142,16 +141,18 @@ def parse_votes(votes):
     return votes_in_meeting
 
 def parse_attendance(attendance, linenum):
-    # TODO: also parse 'special types'
+    # TODO: enhance 'special types' parsing performance
     def parse_chunk(c, l):
         d = {}
         desc = c[0].strip(u'◯').split('(')
-        d['type'] = desc[0].strip()
         if len(desc)==1:
-            d['count'] = None
+            count = None
         else:
-            d['count'] = int(re.search(r'[0-9]+', desc[1]).group(0))
-        d['names'] = parse_names(c[1:], l[1:])[0]
+            count = int(re.search(r'[0-9]+', desc[1]).group(0))
+        d[desc[0].strip()] = {
+            'count': count,
+            'names': parse_names(c[1:], l[1:])[0]
+            }
         return d
 
     idx = [i for i, a in enumerate(attendance) if a.startswith(u'◯')]
@@ -205,11 +206,14 @@ def parse_meeting(datafile, basedir):
 
 
 if __name__=='__main__':
-    basedir = '.'
+    basedir = '/home/e9t/data/popong'
     pdfdir = '%s/meeting-docs' % basedir
     meetingdir = '%s/meeting-data' % basedir
 
     filenames = get_filenames(pdfdir)
-    for filename in filenames:
+    for i, filename in enumerate(filenames):
         print filename
-        parse_meeting(filename, meetingdir)
+        filebase = filename.replace('.pdf', '')[2:]
+        dialoguefile = '%s/dialogue/%s.txt' % (meetingdir, filebase)
+        if not os.path.isfile(dialoguefile):
+            parse_meeting(filename, meetingdir)
