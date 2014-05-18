@@ -2,8 +2,6 @@
 # -*- coding: utf-8 -*-
 
 from itertools import groupby
-import json
-import os
 import re
 import subprocess32 as sp   # only works on POSIX machines
 
@@ -11,12 +9,7 @@ import numpy as np
 import regex
 
 import get
-
-def get_filenames(basedir):
-    os.chdir(basedir)
-    return [os.path.join(path, name).decode('utf-8')\
-            for path, subdirs, files in os.walk('.')\
-                for name in files]
+import utils
 
 def pdf2xml(pdffile):
     sp.check_output(['pdftohtml', '-c', '-q', '-xml', pdffile])
@@ -51,16 +44,6 @@ def find_div(text, nchars):
         if re.search(ur'【보고사항】', t):
             idx[i] = 'reports'
     return idx
-
-def chunk(items, idx, i):
-    # i: start index
-    try:
-        return items[idx[i]:idx[i+1]]
-    except IndexError:
-        return items[idx[i]:]
-
-def chunk_all(items, idx):
-    return [chunk(items, idx, i) for i in range(len(idx))]
 
 def parse_names(rows, linenum=None):
     # FIXME: buggy
@@ -132,7 +115,7 @@ def parse_votes(votes):
 
     votes_in_meeting = []
     idx = [i for i, v in enumerate(votes) if v.startswith(u'◯')]
-    chunks = chunk_all(votes, idx)
+    chunks = utils.chunk_all(votes, idx)
     for i in range(len(idx)):
         bill = {}
         bill['name'] = votes[idx[i]].strip(u'◯')
@@ -156,30 +139,12 @@ def parse_attendance(attendance, linenum):
         return d
 
     idx = [i for i, a in enumerate(attendance) if a.startswith(u'◯')]
-    cz = chunk_all(attendance, idx)
-    lz = chunk_all(linenum, idx)
+    cz = utils.chunk_all(attendance, idx)
+    lz = utils.chunk_all(linenum, idx)
     return filter(None, [parse_chunk(c, l) for c, l in zip(cz, lz)])
 
 def parse_reports(reports):
     raise NotImplementedError
-
-def check_dir(directory):
-    if not os.path.exists(directory):
-        os.makedirs(directory)
-
-def read_text(filename):
-    with open(filename, 'r') as f:
-        return f.read().decode('utf-8').split('\n')
-
-def write_text(text, filename):
-    check_dir(os.path.dirname(filename))
-    with open(filename, 'w') as f:
-        f.write(text.encode('utf-8'))
-
-def write_json(data, filename):
-    check_dir(os.path.dirname(filename))
-    with open(filename, 'w') as f:
-        json.dump(data, f, indent=2)
 
 def parse_meeting(datafile, basedir):
     filebase = datafile.replace('.pdf', '')[2:]
@@ -192,28 +157,28 @@ def parse_meeting(datafile, basedir):
 
     for i in range(len(div)):
         if types[i]=='dialogue':
-            dialogue = parse_dialogue(chunk(text, indexes, i))
-            write_text(dialogue, '%s/dialogue/%s.txt' % (basedir, filebase))
+            dialogue = parse_dialogue(utils.chunk(text, indexes, i))
+            utils.write_text(dialogue, '%s/dialogue/%s.txt' % (basedir, filebase))
         elif types[i]=='votes':
-            votes = parse_votes(chunk(text, indexes, i))
-            write_json(votes, '%s/votes/%s.json' % (basedir, filebase))
+            votes = parse_votes(utils.chunk(text, indexes, i))
+            utils.write_json(votes, '%s/votes/%s.json' % (basedir, filebase))
         elif types[i]=='attendance':
-            attendance = parse_attendance(chunk(text, indexes, i),\
-                    chunk(linenum, indexes, i))
-            write_json(attendance, '%s/attendance/%s.json' % (basedir, filebase))
+            attendance = parse_attendance(utils.chunk(text, indexes, i),\
+                    utils.chunk(linenum, indexes, i))
+            utils.write_json(attendance, '%s/attendance/%s.json' % (basedir, filebase))
 
     # TODO: parse_reports(text[indexes[3]:])
 
 
 if __name__=='__main__':
-    basedir = '/home/e9t/data/popong'
+    basedir = '.'
     pdfdir = '%s/meeting-docs' % basedir
     meetingdir = '%s/meeting-data' % basedir
 
-    filenames = get_filenames(pdfdir)
+    filenames = utils.get_filenames(pdfdir)
     for i, filename in enumerate(filenames):
         print filename
         filebase = filename.replace('.pdf', '')[2:]
         dialoguefile = '%s/dialogue/%s.txt' % (meetingdir, filebase)
-        if not os.path.isfile(dialoguefile):
-            parse_meeting(filename, meetingdir)
+        #if not os.path.isfile(dialoguefile):
+        parse_meeting(filename, meetingdir)
