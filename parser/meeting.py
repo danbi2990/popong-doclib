@@ -9,6 +9,7 @@ import numpy as np
 import regex
 
 import get
+from dialogue import txt2html, txt2json
 import utils
 
 def pdf2xml(pdffile):
@@ -43,7 +44,11 @@ def find_div(text, nchars):
             idx[i] = 'attendance'
         if re.search(ur'【보고사항】', t):
             idx[i] = 'reports'
-    return idx
+
+    tmp = sorted(idx.items(), key=lambda x: x[0])
+    indexes = [t[0] for t in tmp]
+    types = [t[1] for t in tmp]
+    return indexes, types
 
 def parse_names(rows, linenum=None):
     # FIXME: buggy
@@ -146,39 +151,50 @@ def parse_attendance(attendance, linenum):
 def parse_reports(reports):
     raise NotImplementedError
 
-def parse_meeting(datafile, basedir):
-    filebase = datafile.replace('.pdf', '')[2:]
-    xmlroot = pdf2xml(datafile)
-    text, nchars, linenum = get_text(xmlroot)
-    div = find_div(text, nchars)
-    tmp = sorted(div.items(), key=lambda x: x[0])
-    indexes = [t[0] for t in tmp]
-    types = [t[1] for t in tmp]
-
-    for i in range(len(div)):
-        if types[i]=='dialogue':
-            dialogue = parse_dialogue(utils.chunk(text, indexes, i))
-            utils.write_text(dialogue, '%s/dialogue/%s.txt' % (basedir, filebase))
-        elif types[i]=='votes':
-            votes = parse_votes(utils.chunk(text, indexes, i))
-            utils.write_json(votes, '%s/votes/%s.json' % (basedir, filebase))
-        elif types[i]=='attendance':
-            attendance = parse_attendance(utils.chunk(text, indexes, i),\
-                    utils.chunk(linenum, indexes, i))
-            utils.write_json(attendance, '%s/attendance/%s.json' % (basedir, filebase))
-
-    # TODO: parse_reports(text[indexes[3]:])
-
+def get_filenames(pdffile):
+    filebase = pdffile.replace('.pdf', '')[2:]
+    fn = {
+        'attendance': '%s/attendance/%s.json' % (datadir, filebase),
+        'dialogue_txt': '%s/dialogue/%s.txt' % (datadir, filebase),
+        'dialogue_html': '%s/dialogue/%s.html' % (datadir, filebase),
+        'dialogue_json': '%s/dialogue/%s.json' % (datadir, filebase),
+        'votes': '%s/attendance/%s.json' % (datadir, filebase),
+    }
+    return fn
 
 if __name__=='__main__':
     basedir = '.'
+    basedir = '/home/e9t/data/popong'
     pdfdir = '%s/meeting-docs' % basedir
-    meetingdir = '%s/meeting-data' % basedir
+    datadir = '%s/meetings' % basedir
 
-    filenames = utils.get_filenames(pdfdir)
-    for i, filename in enumerate(filenames):
-        print filename
-        filebase = filename.replace('.pdf', '')[2:]
-        dialoguefile = '%s/dialogue/%s.txt' % (meetingdir, filebase)
-        #if not os.path.isfile(dialoguefile):
-        parse_meeting(filename, meetingdir)
+    # TODO: modularize
+    # from issues, pdf create attendance, dialogue, votes
+    pdffiles = utils.get_filenames(pdfdir)[:3]
+    for i, pdffile in enumerate(pdffiles):
+        print pdffile
+        fn = get_filenames(pdffile)
+
+        xmlroot = pdf2xml(pdffile)
+        text, nchars, linenum = get_text(xmlroot)
+        indexes, types = find_div(text, nchars)
+
+        for i in range(len(indexes)):
+            chunk_text = utils.chunk(text, indexes, i)
+            chunk_lines = utils.chunk(linenum, indexes, i)
+
+            if types[i]=='dialogue':
+                dialogue_txt = parse_dialogue(chunk_text)
+                dialogue_html = txt2html(dialogue_txt)
+                dialogue_json = txt2json(dialogue_txt)
+                utils.write_text(dialogue_txt, fn['dialogue_txt'])
+                utils.write_text(dialogue_html, fn['dialogue_html'])
+                utils.write_json(dialogue_json, fn['dialogue_json'])
+            elif types[i]=='votes':
+                votes = parse_votes(chunk_text)
+                utils.write_json(votes, fn['votes'])
+            elif types[i]=='attendance':
+                attendance = parse_attendance(chunk_text, chunk_lines)
+                utils.write_json(attendance, fn['attendance'])
+
+        # TODO: parse_reports(text[indexes[3]:])

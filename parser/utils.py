@@ -28,6 +28,10 @@ def read_text(filename):
     with open(filename, 'r') as f:
         return f.read().decode('utf-8').split('\n')
 
+def read_json(filename):
+    with open(filename, 'r') as f:
+        return json.load(f)
+
 def write_text(text, filename):
     check_dir(os.path.dirname(filename))
     with open(filename, 'w') as f:
