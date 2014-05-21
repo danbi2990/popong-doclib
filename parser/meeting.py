@@ -151,8 +151,8 @@ def parse_attendance(attendance, linenum):
 def parse_reports(reports):
     raise NotImplementedError
 
-def get_filenames(pdffile):
-    filebase = pdffile.replace('.pdf', '')[2:]
+def make_filenames(pdffile, ext='.pdf'):
+    filebase = pdffile.replace(ext, '')[2:]
     fn = {
         'attendance': '%s/attendance/%s.json' % (datadir, filebase),
         'dialogue_txt': '%s/dialogue/%s.txt' % (datadir, filebase),
@@ -173,7 +173,7 @@ if __name__=='__main__':
     pdffiles = utils.get_filenames(pdfdir)[:3]
     for i, pdffile in enumerate(pdffiles):
         print pdffile
-        fn = get_filenames(pdffile)
+        fn = make_filenames(pdffile)
 
         xmlroot = pdf2xml(pdffile)
         text, nchars, linenum = get_text(xmlroot)
