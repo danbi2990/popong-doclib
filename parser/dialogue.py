@@ -14,9 +14,11 @@ def parse_speech(line):
     return speaker, speech
 
 def txt2html(txt):
+    if not isinstance(txt, list):
+        txt = txt.split('\n')
 
     html = []
-    for line in filter(None, txt.split('\n')):
+    for line in filter(None, txt):
         if line.startswith(startsignal):
             speaker, speech = parse_speech(line)
             html.append('<p><b>%s</b>: %s</p>' % (' '.join(speaker), ' '.join(speech)))
@@ -29,8 +31,11 @@ def txt2html(txt):
     return '\n'.join(html)
 
 def txt2json(txt):
+    if not isinstance(txt, list):
+        txt = txt.split('\n')
+
     d = []
-    for line in filter(None, txt.split('\n')):
+    for line in filter(None, txt):
         if line.startswith(startsignal):
             speaker, speech = parse_speech(line)
             e = { 'type': 'statement',\

@@ -163,14 +163,15 @@ def make_filenames(pdffile, ext='.pdf'):
     return fn
 
 if __name__=='__main__':
+    debug = False
     basedir = '.'
     basedir = '/home/e9t/data/popong'
     pdfdir = '%s/meeting-docs' % basedir
     datadir = '%s/meetings' % basedir
 
-    # TODO: modularize
     # from issues, pdf create attendance, dialogue, votes
-    pdffiles = utils.get_filenames(pdfdir)[:3]
+    pdffiles = utils.get_filenames(pdfdir)
+    if debug: pdffiles = pdffiles[:3]
     for i, pdffile in enumerate(pdffiles):
         print pdffile
         fn = make_filenames(pdffile)
