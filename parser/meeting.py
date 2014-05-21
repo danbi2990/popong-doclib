@@ -163,9 +163,8 @@ def make_filenames(pdffile, ext='.pdf'):
     return fn
 
 if __name__=='__main__':
-    debug = False
+    debug = True
     basedir = '.'
-    basedir = '/home/e9t/data/popong'
     pdfdir = '%s/meeting-docs' % basedir
     datadir = '%s/meetings' % basedir
 
