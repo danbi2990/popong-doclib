@@ -1,6 +1,7 @@
 #! /usr/bin/python2.7
 # -*- coding: utf-8 -*-
 
+import os
 from glob import glob
 
 from BeautifulSoup import BeautifulSoup
@@ -12,14 +13,22 @@ import utils
 
 def get_dialogue_indexes(times):
     text = [t[1] for t in times]
-    opening = [u'개의', u'개회', u'개식']
-    closing = [u'폐의', u'폐회', u'폐식', u'산회']
+    opening = [u'개의', u'개회', u'개식', u'개시']
+    closing = [u'폐의', u'폐회', u'폐식', u'산회', u'24시', u'종료']
 
+    start, end = None, None
     for i, t in enumerate(text):
         if any((i in t) for i in opening):
             start = times[i][0]
         if any((i in t) for i in closing):
             end = times[i][0] + 1
+
+    if not start:
+        start = times[0][0]
+        print '\tcheck this file for starting point'
+    if not end:
+        end = times[-1][0] + 1
+        print '\tcheck this file for ending point'
     return (start, end)
 
 def get_elems(htmlfile):
@@ -82,6 +91,9 @@ def parse_others(elems):
                 types.append('votes')
             if u'출석' in title:
                 types.append('attendance')
+        tmp = zip(indexes, types)
+        indexes = [t[0] for t in tmp]
+        types = [t[1] for t in tmp]
         return indexes, types
 
     def tohtml(elems):
@@ -98,31 +110,33 @@ def parse_others(elems):
 
 if __name__=='__main__':
     basedir = '.'
+    basedir = '/home/e9t/data/popong'
     htmldir = '%s/meeting-docs/seoul' % basedir
 
     htmlfiles = [h for h in utils.get_filenames(htmldir) if h.endswith('.html')]
     for h in htmlfiles:
         filebase = h[2:].replace('.html', '')
         htmlfile = '%s/meeting-docs/seoul/%s.html' % (basedir, filebase)
-        print htmlfile
-
-        elems = get_elems(htmlfile)
-        times = get_times(elems)
-        s, e = get_dialogue_indexes(times)
-
-        dialogue = elems[s:e]
-        others = elems[e:]
-
-        # parse dialogue
-        dialogue_txt = parse_dialogue(dialogue)
-        dialogue_json = txt2json(dialogue_txt)
         textfile = '%s/meetings/seoul/dialogue/%s.txt' % (basedir, filebase)
         jsonfile = '%s/meetings/seoul/dialogue/%s.json' % (basedir, filebase)
-        utils.write_text(dialogue_txt, textfile)
-        utils.write_json(dialogue_json, jsonfile)
+        print htmlfile
 
-        # parse others (attendance, votes, appendix)
-        others = parse_others(others)
-        for k, v in others.items():
-            utils.write_text(v,\
-                '%s/meetings/seoul/%s/%s.html' % (basedir, k, filebase))
+        if not os.path.isfile(textfile):
+            elems = get_elems(htmlfile)
+            times = get_times(elems)
+            s, e = get_dialogue_indexes(times)
+
+            dialogue = elems[s:e]
+            others = elems[e:]
+
+            # parse dialogue
+            dialogue_txt = parse_dialogue(dialogue)
+            dialogue_json = txt2json(dialogue_txt)
+            utils.write_text(dialogue_txt, textfile)
+            utils.write_json(dialogue_json, jsonfile)
+
+            # parse others (attendance, votes, appendix)
+            others = parse_others(others)
+            for k, v in others.items():
+                utils.write_text(v,\
+                    '%s/meetings/seoul/%s/%s.html' % (basedir, k, filebase))
