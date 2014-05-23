@@ -24,20 +24,22 @@ def check_dir(directory):
     if not os.path.exists(directory):
         os.makedirs(directory)
 
-def read_text(filename):
+def read_text(filename, encoding='utf-8'):
     with open(filename, 'r') as f:
-        return f.read().decode('utf-8').split('\n')
+        return f.read().decode(encoding).split('\n')
 
 def read_json(filename):
     with open(filename, 'r') as f:
         return json.load(f)
 
-def write_text(text, filename):
-    check_dir(os.path.dirname(filename))
+def write_text(text, filename, checkdir=True):
+    if checkdir:
+        check_dir(os.path.dirname(filename))
     with open(filename, 'w') as f:
         f.write(text.encode('utf-8'))
 
-def write_json(data, filename):
-    check_dir(os.path.dirname(filename))
+def write_json(data, filename, checkdir=True):
+    if checkdir:
+        check_dir(os.path.dirname(filename))
     with open(filename, 'w') as f:
         json.dump(data, f, indent=2)

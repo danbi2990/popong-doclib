@@ -12,6 +12,13 @@ def localtree(url):
         root = parser.parse(f)
     return root
 
+def texttree(text):
+    parser = html5lib.HTMLParser(\
+            tree=html5lib.treebuilders.getTreeBuilder("lxml"),\
+            namespaceHTMLElements=False)
+    root = parser.parse(text)
+    return root
+
 def headtree(root):
     print etree.tostring(root)[0:200]
 

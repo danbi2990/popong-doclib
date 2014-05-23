@@ -5,10 +5,10 @@ import re
 import utils
 
 
-startsignal = u'◯'
+startsignal = [u'◯', u'○']
 
 def parse_speech(line):
-    words = line.strip(startsignal).split()
+    words = line.strip(''.join(startsignal)).split()
     speaker = words[:2]
     speech = words[2:]
     return speaker, speech
@@ -19,7 +19,7 @@ def txt2html(txt):
 
     html = []
     for line in filter(None, txt):
-        if line.startswith(startsignal):
+        if any(line.startswith(s) for s in startsignal):
             speaker, speech = parse_speech(line)
             html.append('<p><b>%s</b>: %s</p>' % (' '.join(speaker), ' '.join(speech)))
         elif re.match(ur'\(.*시.*분.*\)', line):
@@ -36,7 +36,7 @@ def txt2json(txt):
 
     d = []
     for line in filter(None, txt):
-        if line.startswith(startsignal):
+        if any(line.startswith(s) for s in startsignal):
             speaker, speech = parse_speech(line)
             e = { 'type': 'statement',\
                     'content': ' '.join(speech),\
