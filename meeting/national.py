@@ -130,8 +130,8 @@ def parse_votes(votes):
 
 def parse_attendance(attendance, linenum):
     # TODO: enhance 'special types' parsing performance
+    d = {}
     def parse_chunk(c, l):
-        d = {}
         desc = c[0].strip(u'◯').split('(')
         if len(desc)==1:
             count = None
@@ -141,12 +141,13 @@ def parse_attendance(attendance, linenum):
             'count': count,
             'names': parse_names(c[1:], l[1:])[0]
             }
-        return d
 
     idx = [i for i, a in enumerate(attendance) if a.startswith(u'◯')]
     cz = utils.chunk_all(attendance, idx)
     lz = utils.chunk_all(linenum, idx)
-    return filter(None, [parse_chunk(c, l) for c, l in zip(cz, lz)])
+    for c, l in zip(cz, lz):
+        parse_chunk(c, l)
+    return d
 
 def parse_reports(reports):
     raise NotImplementedError
@@ -158,18 +159,19 @@ def make_filenames(pdffile, ext='.pdf'):
         'dialogue_txt': '%s/dialogue/%s.txt' % (datadir, filebase),
         'dialogue_html': '%s/dialogue/%s.html' % (datadir, filebase),
         'dialogue_json': '%s/dialogue/%s.json' % (datadir, filebase),
-        'votes': '%s/attendance/%s.json' % (datadir, filebase),
+        'votes': '%s/votes/%s.json' % (datadir, filebase),
     }
     return fn
 
 if __name__=='__main__':
     debug = True
     basedir = '.'
-    pdfdir = '%s/meeting-docs' % basedir
-    datadir = '%s/meetings' % basedir
+    pdfdir = '%s/meeting-docs/national' % basedir
+    datadir = '%s/meetings/national' % basedir
 
     # from issues, pdf create attendance, dialogue, votes
     pdffiles = utils.get_filenames(pdfdir)
+    pdffiles = [p for p in pdffiles if p.endswith('.pdf')]
     if debug: pdffiles = pdffiles[:3]
     for i, pdffile in enumerate(pdffiles):
         print pdffile
