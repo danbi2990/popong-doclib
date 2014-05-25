@@ -40,7 +40,7 @@ def find_div(text, nchars):
     for i, t in enumerate(text):
         if re.search(ur'【전자투표\s*찬반\s*의원\s*성명】', t):
             idx[i] = 'votes'
-        if re.search(ur'◯(출|참)석\s*(의|위)원.*', t):
+        if re.search(ur'◯(출|참)석\s*(감사|의|위)원.*', t):
             idx[i] = 'attendance'
         if re.search(ur'【보고사항】', t):
             idx[i] = 'reports'
