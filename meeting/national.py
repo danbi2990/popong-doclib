@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from itertools import groupby
+import os
 import re
 import subprocess32 as sp   # only works on POSIX machines
 
@@ -164,7 +165,7 @@ def make_filenames(pdffile, ext='.pdf'):
     return fn
 
 if __name__=='__main__':
-    debug = True
+    debug = False
     basedir = '.'
     pdfdir = '%s/meeting-docs/national' % basedir
     datadir = '%s/meetings/national' % basedir
@@ -174,29 +175,30 @@ if __name__=='__main__':
     pdffiles = [p for p in pdffiles if p.endswith('.pdf')]
     if debug: pdffiles = pdffiles[:3]
     for i, pdffile in enumerate(pdffiles):
-        print pdffile
         fn = make_filenames(pdffile)
+        if not os.path.isfile(fn['dialogue_json']):
+            print pdffile.encode('utf-8')
 
-        xmlroot = pdf2xml(pdffile)
-        text, nchars, linenum = get_text(xmlroot)
-        indexes, types = find_div(text, nchars)
+            xmlroot = pdf2xml(pdffile)
+            text, nchars, linenum = get_text(xmlroot)
+            indexes, types = find_div(text, nchars)
 
-        for i in range(len(indexes)):
-            chunk_text = utils.chunk(text, indexes, i)
-            chunk_lines = utils.chunk(linenum, indexes, i)
+            for i in range(len(indexes)):
+                chunk_text = utils.chunk(text, indexes, i)
+                chunk_lines = utils.chunk(linenum, indexes, i)
 
-            if types[i]=='dialogue':
-                dialogue_txt = parse_dialogue(chunk_text)
-                dialogue_html = txt2html(dialogue_txt)
-                dialogue_json = txt2json(dialogue_txt)
-                utils.write_text(dialogue_txt, fn['dialogue_txt'])
-                utils.write_text(dialogue_html, fn['dialogue_html'])
-                utils.write_json(dialogue_json, fn['dialogue_json'])
-            elif types[i]=='votes':
-                votes = parse_votes(chunk_text)
-                utils.write_json(votes, fn['votes'])
-            elif types[i]=='attendance':
-                attendance = parse_attendance(chunk_text, chunk_lines)
-                utils.write_json(attendance, fn['attendance'])
+                if types[i]=='dialogue':
+                    dialogue_txt = parse_dialogue(chunk_text)
+                    dialogue_html = txt2html(dialogue_txt)
+                    dialogue_json = txt2json(dialogue_txt)
+                    utils.write_text(dialogue_txt, fn['dialogue_txt'])
+                    utils.write_text(dialogue_html, fn['dialogue_html'])
+                    utils.write_json(dialogue_json, fn['dialogue_json'])
+                elif types[i]=='votes':
+                    votes = parse_votes(chunk_text)
+                    utils.write_json(votes, fn['votes'])
+                elif types[i]=='attendance':
+                    attendance = parse_attendance(chunk_text, chunk_lines)
+                    utils.write_json(attendance, fn['attendance'])
 
-        # TODO: parse_reports(text[indexes[3]:])
+            # TODO: parse_reports(text[indexes[3]:])
