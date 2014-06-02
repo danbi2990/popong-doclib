@@ -4,34 +4,13 @@
 from itertools import groupby
 import os
 import re
-import subprocess32 as sp   # only works on POSIX machines
 
 import numpy as np
 import regex
 
-import get
 from dialogue import txt2html, txt2json
-import utils
+from .. import utils
 
-def pdf2xml(pdffile):
-    sp.check_output(['pdftohtml', '-c', '-q', '-xml', pdffile])
-    xmlfile = pdffile.replace('.pdf', '.xml')
-    xmlroot = get.localtree(xmlfile)
-    sp.check_call(['rm', xmlfile])
-    return xmlroot
-
-def get_text(xmlroot):
-    textelems = []
-    pages = xmlroot.xpath('//page')
-    for i, page in enumerate(pages):
-        elems = page.xpath('.//text')
-        if not i==0:
-            elems = elems[1:]
-        textelems.extend(elems)
-    text = [e.xpath('./text()')[0] for e in textelems]
-    nchars = [int(e.xpath('./@width')[0]) for e in textelems]
-    linenum = [int(e.xpath('./@top')[0]) for e in textelems]
-    return text, nchars, linenum
 
 def find_div(text, nchars):
     idx = {}
@@ -45,7 +24,6 @@ def find_div(text, nchars):
             idx[i] = 'attendance'
         if re.search(ur'【보고사항】', t):
             idx[i] = 'reports'
-
     tmp = sorted(idx.items(), key=lambda x: x[0])
     indexes = [t[0] for t in tmp]
     types = [t[1] for t in tmp]
@@ -164,41 +142,40 @@ def make_filenames(pdffile, ext='.pdf'):
     }
     return fn
 
-if __name__=='__main__':
-    debug = False
-    basedir = '.'
-    pdfdir = '%s/meeting-docs/national' % basedir
-    datadir = '%s/meetings/national' % basedir
+def get_sections(xmlroot):
+    textelems = utils.get_textelems(xmlroot)
+    text = [e.xpath('./text()')[0] for e in textelems]
+    nchars = [int(e.xpath('./@width')[0]) for e in textelems]
+    # linenum = [int(e.xpath('./@top')[0]) for e in textelems]
+    indexes, types = find_div(text, nchars)
+    chunks = [utils.chunk(textelems, indexes, i) for i in range(len(indexes))]
+    return [{"type": types[i], "starts_at": indexes[i], "elems": chunks[i]}\
+            for i in range(len(chunks))]
 
-    # from issues, pdf create attendance, dialogue, votes
-    pdffiles = utils.get_filenames(pdfdir)
-    pdffiles = [p for p in pdffiles if p.endswith('.pdf')]
-    if debug: pdffiles = pdffiles[:3]
-    for i, pdffile in enumerate(pdffiles):
-        fn = make_filenames(pdffile)
-        if not os.path.isfile(fn['dialogue_json']):
-            print pdffile.encode('utf-8')
+def parse_all(sections):
+    all_ = {}
+    for section in sections:
+        text = [e.xpath('./text()')[0] for e in section['elems']]
 
-            xmlroot = pdf2xml(pdffile)
-            text, nchars, linenum = get_text(xmlroot)
-            indexes, types = find_div(text, nchars)
+        if section['type']=='dialogue':
+            dialogue_txt = parse_dialogue(text)
+            dialogue_html = txt2html(dialogue_txt)
+            dialogue_json = txt2json(dialogue_txt)
+            # utils.write_text(dialogue_txt, fn['dialogue_txt'])
+            # utils.write_text(dialogue_html, fn['dialogue_html'])
+            # utils.write_json(dialogue_json, fn['dialogue_json'])
+            all_[section['type']] = dialogue_json
+        elif section['type']=='votes':
+            votes = parse_votes(text)
+            all_[section['type']] = votes
+            # utils.write_json(votes, fn['votes'])
+        elif section['type']=='attendance':
+            lines = [int(e.xpath('./@top')[0]) for e in section['elems']]
+            attendance = parse_attendance(text, lines)
+            all_[section['type']] = attendance
+            # utils.write_json(attendance, fn['attendance'])
+        else:
+            raise Exception('Invalid section type')
+        # TODO: parse_reports(text[indexes[3]:])
 
-            for i in range(len(indexes)):
-                chunk_text = utils.chunk(text, indexes, i)
-                chunk_lines = utils.chunk(linenum, indexes, i)
-
-                if types[i]=='dialogue':
-                    dialogue_txt = parse_dialogue(chunk_text)
-                    dialogue_html = txt2html(dialogue_txt)
-                    dialogue_json = txt2json(dialogue_txt)
-                    utils.write_text(dialogue_txt, fn['dialogue_txt'])
-                    utils.write_text(dialogue_html, fn['dialogue_html'])
-                    utils.write_json(dialogue_json, fn['dialogue_json'])
-                elif types[i]=='votes':
-                    votes = parse_votes(chunk_text)
-                    utils.write_json(votes, fn['votes'])
-                elif types[i]=='attendance':
-                    attendance = parse_attendance(chunk_text, chunk_lines)
-                    utils.write_json(attendance, fn['attendance'])
-
-            # TODO: parse_reports(text[indexes[3]:])
+    return all_

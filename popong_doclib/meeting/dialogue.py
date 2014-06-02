@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import re
-import utils
+from .. import utils
 
 
 startsignal = [u'◯', u'○']
