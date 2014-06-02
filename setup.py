@@ -3,12 +3,12 @@
 
 from setuptools import setup
 
-setup(name='popong-doclib',
+setup(name='popong_doclib',
       version='0.1',
       description='Team POPONG Document processing Library',
       url='http://bitbucket.org/teampopong/popong-doclib',
       author='Team POPONG',
       author_email='contact@popong.com',
       license='Apache 2.0',
-      packages=['popong-doclib'],
+      packages=['popong_doclib', 'popong_doclib.meeting', 'popong_doclib.bill', 'popong_doclib.utils'],
       zip_safe=False)
