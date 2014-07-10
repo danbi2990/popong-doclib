@@ -44,7 +44,11 @@ def txt2json(txt):
         elif re.match(ur'\(.*시.*분.*\)', line):
             e = { 'type': 'time', 'content': line }
         elif re.match(ur'[0-9]+\..*', line):
-            e = { 'type': 'issue', 'content': line }
+            if u'가.' in line:
+                idx = [p.start()-1 for p in re.finditer('\.', line)]
+                phrases = [line[i:j] for i, j in zip([0]+idx, idx+[None])]
+                line = '|'.join(phrases)
+            e = { 'type': 'issue', 'content': line.strip('|') }
         else:
             e = { 'type': 'unknown', 'content': line }
         d.append(e)
