@@ -174,8 +174,10 @@ def parse_all(sections):
             attendance = parse_attendance(text, lines)
             all_[section['type']] = attendance
             # utils.write_json(attendance, fn['attendance'])
+        elif section['type']=='reports':
+            # TODO: parse_reports(text[indexes[3]:])
+            all_[section['type']] = None
         else:
-            raise Exception('Invalid section type')
-        # TODO: parse_reports(text[indexes[3]:])
+            raise Exception('Invalid section type "%s"' % section['type'])
 
     return all_
