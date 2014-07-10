@@ -15,6 +15,7 @@ BIGO = u'◯'
 LITTLEO = u'o'
 
 def find_div(text, nchars):
+    idx = {}
     for i, t in enumerate(text):
         if re.search(ur'\([0-9]+시\s*[0-9]+분\s*(개의|개회|개식|개시)\)', t):
             idx[i] = 'dialogue'
@@ -66,9 +67,9 @@ def parse_dialogue(dialogue):
             d = '\n\n' + d
         elif any(d.startswith(i) for i in [LITTLEO]):
             d = '\n' + d
-        elif re.match(ur'\([0-9]+시\s*[0-9]+분\)', d):
+        elif re.match(ur'\([0-9]+시\s*[0-9]+분.*\)', d):
             d = '\n' + d
-        elif re.match(r'[0-9]+\..*', d):
+        elif re.match(r'[0-9]+\.\D.*', d):
             d = '\n' + d
         parsed.append(d)
     return ''.join(parsed)
