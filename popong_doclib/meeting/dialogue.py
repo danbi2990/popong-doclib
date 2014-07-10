@@ -43,7 +43,7 @@ def txt2json(txt):
                     'person': ' '.join(speaker) }
         elif re.match(ur'\(.*시.*분.*\)', line):
             e = { 'type': 'time', 'content': line }
-        elif re.match(ur'[0-9]+\..*', line):
+        elif re.match(ur'[0-9]+\..*', line) or line.startswith('o'):
             if u'가.' in line:
                 idx = [p.start()-1 for p in re.finditer('\.', line)]
                 phrases = [line[i:j] for i, j in zip([0]+idx, idx+[None])]
