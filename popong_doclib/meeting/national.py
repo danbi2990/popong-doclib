@@ -11,6 +11,8 @@ import regex
 from dialogue import txt2html, txt2json
 from .. import utils
 
+BIGO = u'◯'
+LITTLEO = u'o'
 
 def find_div(text, nchars):
     idx = {}
@@ -62,9 +64,9 @@ def parse_dialogue(dialogue):
     parsed = []
     for d in dialogue:
         d = re.sub(r'\s+', ' ', d)
-        if any(d.startswith(i) for i in [u'◯']):
+        if any(d.startswith(i) for i in [BIGO]):
             d = '\n\n' + d
-        elif any(d.startswith(i) for i in [u'(', u'o']):
+        elif any(d.startswith(i) for i in [LITTLEO]):
             d = '\n' + d
         elif re.match(r'[0-9]+\..*', d):
             d = '\n' + d
@@ -83,7 +85,7 @@ def parse_votes(votes):
             if re.search(ur'.*기권\s*의원\s*\(.*\).*', b):
                 idx.append(i)
 
-        attrs = ['yes', 'nay', 'forfeit']
+        attrs = ['yea', 'nay', 'forfeit']
         messages = []
         for i in range(len(idx)):
             s = idx[i]
@@ -98,11 +100,11 @@ def parse_votes(votes):
         bill['message'] = ' '.join(messages)
 
     votes_in_meeting = []
-    idx = [i for i, v in enumerate(votes) if v.startswith(u'◯')]
+    idx = [i for i, v in enumerate(votes) if v.startswith(BIGO)]
     chunks = utils.chunk_all(votes, idx)
     for i in range(len(idx)):
         bill = {}
-        bill['name'] = votes[idx[i]].strip(u'◯')
+        bill['name'] = votes[idx[i]].strip(BIGO)
         parse_bill_text(bill, chunks[i])
         votes_in_meeting.append(bill)
     return votes_in_meeting
@@ -111,7 +113,7 @@ def parse_attendance(attendance, linenum):
     # TODO: enhance 'special types' parsing performance
     d = {}
     def parse_chunk(c, l):
-        desc = c[0].strip(u'◯').split('(')
+        desc = c[0].strip(BIGO).split('(')
         if len(desc)==1:
             count = None
         else:
@@ -121,7 +123,7 @@ def parse_attendance(attendance, linenum):
             'names': parse_names(c[1:], l[1:])[0]
             }
 
-    idx = [i for i, a in enumerate(attendance) if a.startswith(u'◯')]
+    idx = [i for i, a in enumerate(attendance) if a.startswith(BIGO)]
     cz = utils.chunk_all(attendance, idx)
     lz = utils.chunk_all(linenum, idx)
     for c, l in zip(cz, lz):
