@@ -15,11 +15,9 @@ BIGO = u'◯'
 LITTLEO = u'o'
 
 def find_div(text, nchars):
-    idx = {}
-    char_max, char_std = max(nchars), np.std(nchars)
-    idx[len(nchars) - nchars[::-1].index(char_max)] = 'dialogue'
-
     for i, t in enumerate(text):
+        if re.search(ur'\([0-9]+시\s*[0-9]+분\s*(개의|개회|개식|개시)\)', t):
+            idx[i] = 'dialogue'
         if re.search(ur'【전자투표\s*찬반\s*의원\s*성명】', t):
             idx[i] = 'votes'
         if re.search(ur'◯(출|참)석\s*(감사위|의|위)원.*', t):
