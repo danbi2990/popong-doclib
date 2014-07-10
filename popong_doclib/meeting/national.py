@@ -68,6 +68,8 @@ def parse_dialogue(dialogue):
             d = '\n\n' + d
         elif any(d.startswith(i) for i in [LITTLEO]):
             d = '\n' + d
+        elif re.match(ur'\([0-9]+시\s*[0-9]+분\)', d):
+            d = '\n' + d
         elif re.match(r'[0-9]+\..*', d):
             d = '\n' + d
         parsed.append(d)
