@@ -63,14 +63,12 @@ def parse_dialogue(dialogue):
     parsed = []
     for d in dialogue:
         d = re.sub(r'\s+', ' ', d)
-        if any(d.startswith(i) for i in [BIGO]):
-            d = '\n\n' + d
-        elif any(d.startswith(i) for i in [LITTLEO]):
-            d = '\n' + d
-        elif re.match(ur'\([0-9]+시\s*[0-9]+분.*\)', d):
-            d = '\n' + d
-        elif re.match(r'[0-9]+\.\D.*', d):
-            d = '\n' + d
+        if any(d.startswith(i) for i in [BIGO, LITTLEO])\
+            or re.match(r'[0-9]+?\.\D.*?', d):
+                d = '\n' + d
+        elif re.match(ur'\([0-9]+?시\s*?[0-9]+?분.*?\)', d):
+                d = '\n' + d + '\n'
+
         parsed.append(d)
     return ''.join(parsed)
 

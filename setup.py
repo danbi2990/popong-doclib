@@ -4,7 +4,7 @@
 from setuptools import setup
 
 setup(name='popong_doclib',
-      version='0.2',
+      version='0.2.1',
       description='Team POPONG Document processing Library',
       url='http://bitbucket.org/teampopong/popong-doclib',
       author='Team POPONG',
